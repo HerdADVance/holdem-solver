@@ -123,7 +123,7 @@ class Hand{
 		return false;
 	}
 
-	function isStraightFlush(){
+	function isStraightFlush(){ // Will only be ran if isFlush is true
 
 		$flushRanks = $this->suits[$this->flushSuit];
 		rsort($flushRanks);
@@ -213,12 +213,13 @@ class Hand{
 
 }
 
-$board = ['3C', '2S', '4S', '5S', '7H'];
-$hand = new Hand(['TS', 'KS'], $board);
+$board = ['2C', '2S', '3C', '3S', '7H'];
+$hand = new Hand(['4S', '4H'], $board);
 
 $hand->sortRanks();
 $hand->sortSuits();
 $hand->sortPairs();
+var_dump(computeHand($hand));
 
 function computeHand($hand){
 
@@ -255,8 +256,6 @@ function computeHand($hand){
 	return 1;
 
 }
-
-var_dump(computeHand($hand));
 
 
 
