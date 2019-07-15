@@ -150,6 +150,10 @@ class Hand{
 			$lastValue = $card;
 		}
 
+		if($streak === 4 && $flushRanks[0] === 14){ // Ace-low straight flush exception
+			if(array_values(array_slice($flushRanks, -1))[0] === 2) return true; // last item in array is 2 so is straight flush
+		}
+
 		return false;
 
 	}
@@ -170,6 +174,8 @@ class Hand{
 				$streak = 0;
 			}
 		}
+
+		if($streak === 4 && $this->ranks[14] > 0) return true; // Ace-low straight exception
 
 		return false;
 	}
@@ -213,8 +219,8 @@ class Hand{
 
 }
 
-$board = ['2C', '2S', '3C', '3S', '7H'];
-$hand = new Hand(['4S', '4H'], $board);
+$board = ['2S', '3S', '4S', '5S', 'AH'];
+$hand = new Hand(['KS', 'JC'], $board);
 
 $hand->sortRanks();
 $hand->sortSuits();
