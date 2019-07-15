@@ -1,18 +1,5 @@
 <?php 
 
-// TYPES
-
-// 9 -  Straight Flush
-// 8 -  4 of a kind
-// 7 -  Full House
-// 6 -  Flush
-// 5 -  Straight
-// 4 -  3 of a kind
-// 3 -  2 Pair
-// 2 -  1 Pair
-// 1 -  High Card
-
-
 class Hand{
 
 	function __construct($cards, $board){
@@ -38,14 +25,17 @@ class Hand{
 		];
 
 		$this->suits = [
-			'C' => 0,
-			'D' => 0,
-			'H' => 0,
-			'S' => 0,
+			'C' => [],
+			'D' => [],
+			'H' => [],
+			'S' => [],
 		];
 
 		$this->flushSuit = null;
+		$this->flushCards = [];
 		$this->lowestStraightCard = null;
+		$this->boatHigh = null;
+		$this->boatLow = null;
 
 		$this->quads = [];
 		$this->trips = [];
@@ -91,8 +81,9 @@ class Hand{
 	function sortSuits(){
 		
 		foreach($this->boardHand as $card){
+			$rank = substr($card, 0, 1);
 			$suit = substr($card, 1);
-			$this->suits[$suit] ++;
+			$this->suits[$suit][] = $this->convertRankToInteger($rank);;
 		}
 
 	}
@@ -123,13 +114,44 @@ class Hand{
 	function isFlush(){
 
 		foreach($this->suits as $key => $value){
-			if($value >= 5){
+			if(count($value) >= 5){
 				$this->flushSuit = $key;
 				return true;
 			}
 		}
 
 		return false;
+	}
+
+	function isStraightFlush(){
+
+		$flushRanks = $this->suits[$this->flushSuit];
+		rsort($flushRanks);
+
+		$streak = 1;
+		$lastValue = null;
+
+		foreach($flushRanks as $card){
+			
+			if($lastValue === null){
+				$lastValue = $card;
+				continue;
+			}
+
+			if($lastValue === $card + 1){
+				$streak ++;
+			} else{
+				$lastValue = null;
+				$streak = 1;
+			}
+
+			if($streak === 5) return true;
+
+			$lastValue = $card;
+		}
+
+		return false;
+
 	}
 
 
@@ -158,42 +180,84 @@ class Hand{
 	}
 
 	function isTrips(){
-		if (count($this->trips) > 0){
-			
-			// check for boat
-			return true;
+		if (count($this->trips) > 0) return true;
+			else return false;
+	}
 
-		} else return false;
+	function isBoat(){ // will only be ran if isTrips returns true
+		
+		if($this->trips[1]){
+			$this->boatHigh = $this->trips[0];
+			$this->boatLow = $this->trips[1];
+			return true;
+		}
+		
+		if($this->pairs[0]){
+			$this->boatHigh = $this->trips[0];
+			$this->boatLow = $this->pairs[0];
+			return true;
+		}
+
+		return false;
+	}
+
+	function isTwoPair(){
+		if(count($this->pairs) >= 2) return true;
+			return false;
+	}
+
+	function isPair(){
+		if(count($this->pairs) == 1) return true;
+			return false;
 	}
 
 }
 
-$board = ['JS', 'JH', 'JC', 'JD', 'QS'];
-$hand = new Hand(['KD', 'KS'], $board);
+$board = ['3C', '2S', '4S', '5S', '7H'];
+$hand = new Hand(['TS', 'KS'], $board);
 
 $hand->sortRanks();
 $hand->sortSuits();
 $hand->sortPairs();
 
-var_dump($hand->ranks);
+function computeHand($hand){
 
-// Check for flush (then straight flush)
-// Check for 4
-// Check for 3 (then full house)
-// Check for straight
-// Two pair
-// Pair
+	// TYPES
+	// 9 -  Straight Flush
+	// 8 -  4 of a kind
+	// 7 -  Full House
+	// 6 -  Flush
+	// 5 -  Straight
+	// 4 -  3 of a kind
+	// 3 -  2 Pair
+	// 2 -  1 Pair
+	// 1 -  High Card
 
-var_dump('FLUSH: ' . $hand->isFlush());
-var_dump('STRAIGHT: ' . $hand->isStraight());
+	$isFlush = $hand->isFlush();
+	$isTrips = $hand->isTrips();
 
-var_dump('LOWEST STRAIGHT CARD: ' . $hand->lowestStraightCard);
-var_dump('FLUSH SUIT: ' . $hand->flushSuit);
+	if($isFlush){ 
+		if($hand->isStraightFlush()) return 9;
+	}
 
-var_dump($hand->trips);
-var_dump($hand->pairs);
+	if($hand->isQuads()) return 8;
+	
+	if($isTrips){
+		if($hand->isBoat()) return 7;
+	}
 
-var_dump($hand->isQuads());
+	if($isFlush) return 6;
+	if($hand->isStraight()) return 5;
+	if($isTrips) return 4;
+	if($hand->isTwoPair()) return 3;
+	if($hand->isPair()) return 2;
+
+	return 1;
+
+}
+
+var_dump(computeHand($hand));
+
 
 
 
