@@ -219,14 +219,6 @@ class Hand{
 
 }
 
-$board = ['2S', '3S', '4S', '5S', 'AH'];
-$hand = new Hand(['KS', 'JC'], $board);
-
-$hand->sortRanks();
-$hand->sortSuits();
-$hand->sortPairs();
-var_dump(computeHand($hand));
-
 function computeHand($hand){
 
 	// TYPES
@@ -262,6 +254,24 @@ function computeHand($hand){
 	return 1;
 
 }
+
+$board = ['2S', '3S', '4S', '5S', 'AH'];
+$hands = [['AC', 'KC'], ['QD', 'QH']];
+
+foreach($hands as $key => $hand){
+	$playerHand = new Hand($hand, $board);
+	$playerHand->sortRanks();
+	$playerHand->sortSuits();
+	$playerHand->sortPairs();
+	$playerHand->type = computeHand($playerHand);
+	var_dump($playerHand);
+}
+
+//var_dump($hands);
+
+//var_dump(computeHand($hand));
+
+
 
 
 
