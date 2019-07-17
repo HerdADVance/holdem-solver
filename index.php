@@ -5,7 +5,7 @@ class Hand{
 	function __construct($cards, $board){
 		$this->hand = $cards;
 		$this->boardHand = array_merge($cards, $board);
-		$this->type = 1;
+		$this->value = 1;
 		$this->winner = false;
 
 		$this->ranks = [
@@ -34,6 +34,7 @@ class Hand{
 		$this->flushSuit = null;
 		$this->flushCards = [];
 		$this->lowestStraightCard = null;
+		$this->lowestStraightFlushCard = null;
 		$this->boatHigh = null;
 		$this->boatLow = null;
 
@@ -217,59 +218,72 @@ class Hand{
 			return false;
 	}
 
-}
+	function computeValue(){
 
-function computeHand($hand){
+		$isFlush = $this->isFlush();
+		$isTrips = $this->isTrips();
 
-	// TYPES
-	// 9 -  Straight Flush
-	// 8 -  4 of a kind
-	// 7 -  Full House
-	// 6 -  Flush
-	// 5 -  Straight
-	// 4 -  3 of a kind
-	// 3 -  2 Pair
-	// 2 -  1 Pair
-	// 1 -  High Card
+		if($isFlush){ 
+			if($this->isStraightFlush()) return 9;
+		}
 
-	$isFlush = $hand->isFlush();
-	$isTrips = $hand->isTrips();
+		if($this->isQuads()) return 8;
+		
+		if($isTrips){
+			if($this->isBoat()) return 7;
+		}
 
-	if($isFlush){ 
-		if($hand->isStraightFlush()) return 9;
+		if($isFlush) return 6;
+		if($this->isStraight()) return 5;
+		if($isTrips) return 4;
+		if($this->isTwoPair()) return 3;
+		if($this->isPair()) return 2;
+
+		return 1;
+
 	}
-
-	if($hand->isQuads()) return 8;
-	
-	if($isTrips){
-		if($hand->isBoat()) return 7;
-	}
-
-	if($isFlush) return 6;
-	if($hand->isStraight()) return 5;
-	if($isTrips) return 4;
-	if($hand->isTwoPair()) return 3;
-	if($hand->isPair()) return 2;
-
-	return 1;
 
 }
 
-$board = ['2S', '3S', '4S', '5S', 'AH'];
-$hands = [['AC', 'KC'], ['QD', 'QH']];
+
+$board = ['TS', 'JS', '9S', '2S', '3H'];
+$hands = [['AC', 'KC'], ['QC', 'QH']];
+
+$computedHands = [];
 
 foreach($hands as $key => $hand){
 	$playerHand = new Hand($hand, $board);
 	$playerHand->sortRanks();
 	$playerHand->sortSuits();
 	$playerHand->sortPairs();
-	$playerHand->type = computeHand($playerHand);
-	var_dump($playerHand);
+	$playerHand->value = $playerHand->computeValue();
+	$computedHands[] = $playerHand;
 }
 
-//var_dump($hands);
+$possibleWinners = [];
+$bestHandValue = 0;
 
-//var_dump(computeHand($hand));
+foreach($computedHands as $hand){
+
+	$handValue = $hand->value;
+	
+	if($handValue > $bestHandValue){
+		$possibleWinners = [$hand];
+		$bestHandValue = $handValue;
+		continue;
+	}
+
+	if($handValue === $bestHandValue){
+		$possibleWinners[] = $hand;
+	}
+
+}
+
+if(count($possibleWinners) === 1){
+	var_dump($possibleWinners[0]->hand);
+} else{
+	echo "TIEBREAKERS NEEDED";
+}
 
 
 
