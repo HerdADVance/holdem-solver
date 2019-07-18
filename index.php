@@ -128,6 +128,7 @@ class Hand{
 
 		$flushRanks = $this->suits[$this->flushSuit];
 		rsort($flushRanks);
+		$this->flushCards = $flushRanks;
 
 		$streak = 1;
 		$lastValue = null;
@@ -147,7 +148,7 @@ class Hand{
 			}
 
 			if($streak === 5){ // found straight flush
-				$this->lowestStraightFlushCard = $card;
+				$this->lowestStraightFlushCard = [$card];
 				return true;
 			}
 
@@ -156,7 +157,7 @@ class Hand{
 
 		if($streak === 4 && $flushRanks[0] === 14){ // Ace-low straight flush exception
 			if(array_values(array_slice($flushRanks, -1))[0] === 2){ // last item in array is 2 so is straight flush
-				$this->lowestStraightFlushCard = 1;
+				$this->lowestStraightFlushCard = [1];
 				return true; 
 			}
 		}
@@ -174,7 +175,7 @@ class Hand{
 			if($value > 0){
 				$streak ++;
 				if($streak === 5){ // found straight
-					$this->lowestStraightCard = $key;
+					$this->lowestStraightCard = [$key];
 					return true;
 				}
 			} else{
@@ -183,7 +184,7 @@ class Hand{
 		}
 
 		if($streak === 4 && $this->ranks[14] > 0){ // Ace-low straight exception
-			$this->lowestStraightCard = 1;
+			$this->lowestStraightCard = [1];
 			return true;
 		}
 
@@ -255,8 +256,8 @@ class Hand{
 }
 
 
-$board = ['TS', 'JC', '9H', '7D', '8S'];
-$hands = [['QD', 'KC'], ['QC', 'KH']];
+$board = ['6S', '5S', '7S', '9S', '8S'];
+$hands = [['AS', 'JC'], ['4S', 'KH']];
 
 $computedHands = [];
 
@@ -289,7 +290,7 @@ foreach($computedHands as $hand){
 }
 
 if(count($possibleWinners) === 1){
-	var_dump($possibleWinners[0]->hand);
+	var_dump($possibleWinners);
 } else{
 	//breakTies($possibleWinners);
 	var_dump(breakTies($possibleWinners));
@@ -302,73 +303,66 @@ function breakTies($hands){
 	switch($hands[0]->value){
 
 		case 9:
-			$hands = breakStraightFlushTie($hands);
+			$winners = checkArrays($hands, 'lowestStraightFlushCard', 1);
 			break;
 		case 8:
-			$hands = breakQuadsTie($hands);
+			$winners = checkArrays($hands, 'quads', 1, ['trips', 'pairs', 'kickers'], 1);
 			break;
 		case 7:
-			$hands = breakBoatTie($hands);
+			$winners = breakBoatTie($hands);
 			break;
 		case 6:
-			$hands = breakFlushTie($hands);
+			$winners = checkArrays($hands, 'flushCards', 5);
 			break;
 		case 5:
-			$hands = breakStraightTie($hands);
+			$winners = checkArrays($hands, 'lowestStraightCard');
 			break;
 		case 4:
-			$hands = breakTripsTie($hands);
+			$winners = checkArrays($hands, 'trips', 1, ['kickers'], 2);
 			break;
 		case 3:
-			$hands = breakTwoPairTie($hands);
+			$winners = checkArrays($hands, 'pairs', 2, ['kickers'], 1);
 			break;
 		case 2:
-			$hands = breakPairTie($hands);
+			$winners = checkArrays($hands, 'pairs', 1, ['kickers'], 3);
 			break;
 		case 1:
-			$hands = breakHighCardTie($hands);
+			$winners = breakHighCardTie($hands, ['kickers'], 5);
 			break;
 
 	}
 
-	return $hands;
-}
-
-function breakStraightFlushTie($hands){
-	$winners = findHighest($hands, 'lowestStraightFlushCard');
 	return $winners;
 }
 
-function breakStraightTie($hands){
-	$winners = findHighest($hands, 'lowestStraightCard');
-	return $winners;
-}
+function checkArrays($hands, $toCompare, $depth = 1, $kickers = null, $kickerDepth = null){
 
-function findHighest($hands, $toCompare){
+	for($i = 0; $i < $depth; $i++){
 
-	$comparing = $toCompare;
+		$winners = [];
+		$best = 0;
 
-	$winners = [];
-	$best = 0;
+		foreach($hands as $hand){
 
-	foreach($hands as $hand){
-		
-		if($hand->{$comparing} > $best){
-			$winners = [$hand];
-			$best = $hand->{$comparing};
-			continue;
+			if($hand->{$toCompare}[$i] > $best){
+				$winners = [$hand];
+				$best = $hand->{$toCompare}[$i];
+				continue;
+			}
+
+			if($hand->{$toCompare}[$i] === $best){
+				$winners[] = $hand;
+			}
+
 		}
 
-		if($hand->{$comparing} === $best){
-			$winners[] = $hand;
-		}
+		if(count($winners) === 1) return $winners;
 
 	}
 
 	return $winners;
 
 }
-
 
 
 
