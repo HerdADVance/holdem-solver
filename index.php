@@ -211,14 +211,14 @@ class Hand{
 	}
 
 	function isBoat(){ // will only be ran if isTrips returns true
-		
-		if($this->trips[1]){
+
+		if(array_key_exists(1, $this->trips)){
 			$this->boat[] = $this->trips[0];
 			$this->boat[] = $this->trips[1];
 			return true;
 		}
 		
-		if($this->pairs[0]){
+		if(array_key_exists(0, $this->pairs)){
 			$this->boat[] = $this->trips[0];
 			$this->boat[] = $this->pairs[0];
 			return true;
@@ -235,7 +235,7 @@ class Hand{
 	}
 
 	function findTwoPairKicker(){
-		if($this->pairs[2]){
+		if(array_key_exists(2, $this->pairs)){
 			$kicker = $this->pairs[2];
 			if($this->kickers[0] > $kicker) $kicker = $this->kickers[0];
 			return $kicker;
@@ -275,8 +275,8 @@ class Hand{
 }
 
 
-$board = ['KH', 'KS', 'JC', 'JD', '3H'];
-$hands = [['QC', 'QD'], ['3H', 'TS']];
+$board = ['KH', 'AS', 'KC', 'AD', 'QH'];
+$hands = [['3C', '2D'], ['2H', 'QC']];
 
 $computedHands = [];
 
@@ -378,11 +378,8 @@ function checkArrays($hands, $toCompare, $depth = 1, $kickers = null, $kickerDep
 
 	}
 
-	if(count($winners) === 1) return $winners;
-
 	if($kickers) return checkKickers($winners, $kickers, $kickerDepth);
 	
-	return $winners;
 }
 
 function checkKickers($hands, $toCompare, $depth = 1){
