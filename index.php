@@ -32,11 +32,12 @@ class Hand{
 		];
 
 		$this->flushSuit = null;
-		$this->flushCards = [];
+		$this->flushCards = null;
 		$this->lowestStraightCard = null;
 		$this->lowestStraightFlushCard = null;
-		$this->boatHigh = null;
-		$this->boatLow = null;
+		$this->boat = null;
+		$this->quadKicker = null;
+		$this->twoPairKicker = null;
 
 		$this->quads = [];
 		$this->trips = [];
@@ -192,26 +193,34 @@ class Hand{
 	}
 
 	function isQuads(){
-		if (count($this->quads) > 0) return true;
-			else return false;
+		if(count($this->quads) > 0){
+			$this->quadKicker = [$this->findQuadKicker()];
+			return true;
+		} else return false;
+	}
+
+	function findQuadKicker(){
+		foreach($this->ranks as $key => $value){
+			if($value > 0 && $value < 4) return $key;
+		}
 	}
 
 	function isTrips(){
-		if (count($this->trips) > 0) return true;
+		if(count($this->trips) > 0) return true;
 			else return false;
 	}
 
 	function isBoat(){ // will only be ran if isTrips returns true
 		
 		if($this->trips[1]){
-			$this->boatHigh = $this->trips[0];
-			$this->boatLow = $this->trips[1];
+			$this->boat[] = $this->trips[0];
+			$this->boat[] = $this->trips[1];
 			return true;
 		}
 		
 		if($this->pairs[0]){
-			$this->boatHigh = $this->trips[0];
-			$this->boatLow = $this->pairs[0];
+			$this->boat[] = $this->trips[0];
+			$this->boat[] = $this->pairs[0];
 			return true;
 		}
 
@@ -219,8 +228,18 @@ class Hand{
 	}
 
 	function isTwoPair(){
-		if(count($this->pairs) >= 2) return true;
-			return false;
+		if(count($this->pairs) >= 2){
+			$this->twoPairKicker = [$this->findTwoPairKicker()];
+			return true;
+		} else return false;
+	}
+
+	function findTwoPairKicker(){
+		if($this->pairs[2]){
+			$kicker = $this->pairs[2];
+			if($this->kickers[0] > $kicker) $kicker = $this->kickers[0];
+			return $kicker;
+		} else return $this->kickers[0];		
 	}
 
 	function isPair(){
@@ -256,8 +275,8 @@ class Hand{
 }
 
 
-$board = ['6S', '5S', '7S', '9S', '8S'];
-$hands = [['AS', 'JC'], ['4S', 'KH']];
+$board = ['KH', 'KS', 'JC', 'JD', '3H'];
+$hands = [['QC', 'QD'], ['3H', 'TS']];
 
 $computedHands = [];
 
@@ -292,7 +311,6 @@ foreach($computedHands as $hand){
 if(count($possibleWinners) === 1){
 	var_dump($possibleWinners);
 } else{
-	//breakTies($possibleWinners);
 	var_dump(breakTies($possibleWinners));
 }
 
@@ -306,28 +324,28 @@ function breakTies($hands){
 			$winners = checkArrays($hands, 'lowestStraightFlushCard', 1);
 			break;
 		case 8:
-			$winners = checkArrays($hands, 'quads', 1, ['trips', 'pairs', 'kickers'], 1);
+			$winners = checkArrays($hands, 'quads', 1, 'quadKicker', 1);
 			break;
 		case 7:
-			$winners = breakBoatTie($hands);
+			$winners = checkArrays($hands, 'boat', 2);
 			break;
 		case 6:
 			$winners = checkArrays($hands, 'flushCards', 5);
 			break;
 		case 5:
-			$winners = checkArrays($hands, 'lowestStraightCard');
+			$winners = checkArrays($hands, 'lowestStraightCard', 1);
 			break;
 		case 4:
-			$winners = checkArrays($hands, 'trips', 1, ['kickers'], 2);
+			$winners = checkArrays($hands, 'trips', 1, 'kickers', 2);
 			break;
 		case 3:
-			$winners = checkArrays($hands, 'pairs', 2, ['kickers'], 1);
+			$winners = checkArrays($hands, 'pairs', 2, 'twoPairKicker', 1);
 			break;
 		case 2:
-			$winners = checkArrays($hands, 'pairs', 1, ['kickers'], 3);
+			$winners = checkArrays($hands, 'pairs', 1, 'kickers', 3);
 			break;
 		case 1:
-			$winners = breakHighCardTie($hands, ['kickers'], 5);
+			$winners = checkKickers($hands, 'kickers', 5);
 			break;
 
 	}
@@ -336,6 +354,38 @@ function breakTies($hands){
 }
 
 function checkArrays($hands, $toCompare, $depth = 1, $kickers = null, $kickerDepth = null){
+
+	for($i = 0; $i < $depth; $i++){
+
+		$winners = [];
+		$best = 0;
+
+		foreach($hands as $hand){
+
+			if($hand->{$toCompare}[$i] > $best){
+				$winners = [$hand];
+				$best = $hand->{$toCompare}[$i];
+				continue;
+			}
+
+			if($hand->{$toCompare}[$i] === $best){
+				$winners[] = $hand;
+			}
+
+		}
+
+		if(count($winners) === 1) return $winners;
+
+	}
+
+	if(count($winners) === 1) return $winners;
+
+	if($kickers) return checkKickers($winners, $kickers, $kickerDepth);
+	
+	return $winners;
+}
+
+function checkKickers($hands, $toCompare, $depth = 1){
 
 	for($i = 0; $i < $depth; $i++){
 
